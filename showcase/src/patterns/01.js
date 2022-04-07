@@ -1,4 +1,5 @@
 import React, { Component, useState } from "react";
+import mojs from "@mojs/core";
 import styles from "./index.css";
 
 const initialState = {
@@ -12,15 +13,36 @@ const initialState = {
  */
 const withClapAnimation = WrappedComponent => {
 	class WithClapAnimation extends Component {
-		// animation logic
-		animate() {
-			console.log('%c Animate', 'background: yellow; color: black;');
+		animationTimeline = new mojs.Timeline();
+
+		state = {
+			animationTimeline: this.animationTimeline
 		}
+
+		componentDidMount() {
+			const scaleButton = new mojs.Html({
+				el: "#clap",
+				duration: 300,
+				scale: {1.3 : 1},
+				easing: mojs.easing.ease.out
+			});
+
+			const clap = document.getElementById('clap');
+			clap.style.transform = 'scale(1, 1)';
+
+			const newAnimationTimeline = this.animationTimeline.add([scaleButton]);
+			this.setState({animationTimeline: newAnimationTimeline});
+		}
+
+		// animation logic
+		// animationTimeline() {
+		// 	console.log('%c Animate', 'background: yellow; color: black;');
+		// }
 
 		render() {
 			return <WrappedComponent
 				{ ...this.props }
-				animate={ this.animate }
+				animationTimeline={ this.state.animationTimeline }
 			/>;
 		}
 	}
@@ -29,13 +51,13 @@ const withClapAnimation = WrappedComponent => {
 };
 
 const MediumClap = props => {
-	const { animate } = props;
+	const { animationTimeline } = props;
 	const MAX_USER_CLAP = 12;
 	const [clapState, setClapState] = useState(initialState);
 	const { count, countTotal, isClicked } = clapState;
 
 	const handleClapClick = () => {
-		animate();
+		animationTimeline.replay();
 		setClapState(prevState => ({
 			isClicked: true,
 			count: Math.min(count + 1, MAX_USER_CLAP),
@@ -44,7 +66,7 @@ const MediumClap = props => {
 	};
 
   return (
-    <button className={ styles.clap } onClick={ () => handleClapClick() }>
+		<button id="clap" className={ styles.clap } onClick={ () => handleClapClick() }>
       <ClapIcon isClicked={ isClicked } />
       <ClapCount count={ count } />
       <CountTotal countTotal={ countTotal } />
