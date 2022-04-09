@@ -20,17 +20,79 @@ const withClapAnimation = WrappedComponent => {
 		}
 
 		componentDidMount() {
+			const tlDuration = 300;
 			const scaleButton = new mojs.Html({
 				el: "#clap",
-				duration: 300,
+				duration: tlDuration,
 				scale: {1.3 : 1},
 				easing: mojs.easing.ease.out
+			});
+
+			const countAnimation= new mojs.Html({
+				el: "#clapCount",
+				duration: tlDuration,
+				opacity: { 0: 1 },
+				y: { 0: -30 }
+			}).then({
+				opacity: {1 : 0},
+				y: -80,
+				delay: tlDuration / 2
+			});
+
+			const countTotalAnimation = new mojs.Html({
+				el: "#clapCountTotal",
+				duration: tlDuration,
+				opacity: {0 : 1},
+				delay: (3 * tlDuration) / 2,
+				y: {0 : -3}
+			});
+
+			const triangleBurst = new mojs.Burst({
+				parent: "#clap",
+				radius: {50 : 95},
+				count: 5,
+				angle: 30,
+				children: {
+					shape: 'polygon',
+					radius: {6 : 0},
+					stroke: 'rgba(211, 84, 0, 0.5)',
+					strokeWidth: 2,
+					angle: 210,
+					delay: 30,
+					speed: 0.2,
+					easing: mojs.easing.bezier(0.1, 1, 0.3, 1),
+					duration: tlDuration
+				},
+			});
+
+			const circleBurst = new mojs.Burst({
+				parent: "#clap",
+				radius: { 50: 75 },
+				angle: 25,
+				duration: tlDuration,
+				children: {
+					shape: 'cirle',
+					radius: { 3: 0 },
+					fill: 'rgba(149, 165, 166, 0.5)',
+					// strokeWidth: 2,
+					// angle: 210,
+					delay: 30,
+					speed: 0.2,
+					easing: mojs.easing.bezier(0.1, 1, 0.3, 1),
+					// duration: tlDuration
+				},
 			});
 
 			const clap = document.getElementById('clap');
 			clap.style.transform = 'scale(1, 1)';
 
-			const newAnimationTimeline = this.animationTimeline.add([scaleButton]);
+			const newAnimationTimeline = this.animationTimeline.add([
+				scaleButton,
+				countAnimation,
+				countTotalAnimation,
+				triangleBurst,
+				circleBurst
+			]);
 			this.setState({animationTimeline: newAnimationTimeline});
 		}
 
@@ -96,7 +158,7 @@ const ClapCount = props => {
   const { count } = props;
 
   return (
-    <span className={ styles.count }>+ { count }</span>
+		<span id="clapCount" className={ styles.count }>+ { count }</span>
   );
 };
 
@@ -104,7 +166,7 @@ const CountTotal = props => {
   const { countTotal } = props;
 
   return (
-    <span className={ styles.total }>{ countTotal }</span>
+    <span id="clapCountTotal" className={ styles.total }>{ countTotal }</span>
   );
 };
 
