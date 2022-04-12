@@ -71,15 +71,12 @@ const withClapAnimation = WrappedComponent => {
 				angle: 25,
 				duration: tlDuration,
 				children: {
-					shape: 'cirle',
-					radius: { 3: 0 },
+					shape: 'circle',
+					radius: { 3 : 0 },
 					fill: 'rgba(149, 165, 166, 0.5)',
-					// strokeWidth: 2,
-					// angle: 210,
 					delay: 30,
 					speed: 0.2,
 					easing: mojs.easing.bezier(0.1, 1, 0.3, 1),
-					// duration: tlDuration
 				},
 			});
 
