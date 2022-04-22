@@ -1,7 +1,10 @@
 import React, {
+  createContext,
   useCallback,
+  useContext,
   useLayoutEffect,
-  useState
+  useMemo,
+  useState 
 } from "react";
 import mojs from "@mojs/core";
 import styles from "./index.css";
@@ -110,9 +113,10 @@ const {Provider} = MediumClapContext;
 
 const MediumClap = props => {
   const {children} = props;
+
   const MAX_USER_CLAP = 12;
   const [clapState, setClapState] = useState(initialState);
-  const { count, countTotal, isClicked } = clapState;
+  const { count } = clapState;
   // Create a state to keep all ref objects in it
   const [{ clapRef, clapCountRef, clapTotalRef }, setRefState] = useState({});
 
@@ -138,15 +142,20 @@ const MediumClap = props => {
     }));
   };
 
+  const memoized = useMemo(() => ({
+    ...clapState,
+    setRef
+  }, [clapState, setRef]));
+
   return (
-    <Provider value={{ ...clapState, setRef}}>
+    <Provider value={memoized}>
       <button
         ref={setRef}
         data-refkey="clapRef"
         className={styles.clap}
         onClick={() => handleClapClick()}
       >
-      {children}
+        {children}
       </button>
     </Provider>
   );
@@ -155,8 +164,8 @@ const MediumClap = props => {
 /*
  * Sub components
  */
-const ClapIcon = props => {
-  const { isClicked } = props;
+const ClapIcon = () => {
+  const { isClicked } = useContext(MediumClapContext);
 
   return (<span>
     <svg
@@ -170,16 +179,16 @@ const ClapIcon = props => {
   </span>);
 };
 
-const ClapCount = props => {
-  const { count, setRef } = props;
+const ClapCount = () => {
+  const { count, setRef } = useContext(MediumClapContext);
 
   return (
     <span ref={setRef} data-refkey="clapCountRef" id="clapCount" className={styles.count}>+ {count}</span>
   );
 };
 
-const CountTotal = props => {
-  const { countTotal, setRef } = props;
+const CountTotal = () => {
+  const { countTotal, setRef } = useContext(MediumClapContext);
 
   return (
     <span ref={setRef} data-refkey="clapTotalRef" id="clapCountTotal" className={styles.total}>{countTotal}</span>
@@ -188,8 +197,11 @@ const CountTotal = props => {
 
 const Usage = () => {
   return <MediumClap>
-
+    <ClapIcon />
+    <ClapCount />
+    <CountTotal />
   </MediumClap>;
 };
 
 export default Usage;
+
