@@ -2,9 +2,11 @@ import React, {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useLayoutEffect,
   useMemo,
-  useState 
+  useRef,
+  useState
 } from "react";
 import mojs from "@mojs/core";
 import styles from "./index.css";
@@ -112,8 +114,7 @@ const MediumClapContext = createContext();
 const {Provider} = MediumClapContext;
 
 const MediumClap = props => {
-  const {children} = props;
-
+  const {children, onClap} = props;
   const MAX_USER_CLAP = 12;
   const [clapState, setClapState] = useState(initialState);
   const { count } = clapState;
@@ -133,6 +134,17 @@ const MediumClap = props => {
     totalEl: clapTotalRef,
   });
 
+  const componentJustMounted = useRef(true);
+
+  useEffect(() => {
+    if (!componentJustMounted.current) {
+      console.log("invoked ...")
+      onClap && onClap(clapState);
+    }
+
+    componentJustMounted.current = false;
+  }, [count]);
+
   const handleClapClick = () => {
     animationTimeline.replay();
     setClapState(prevState => ({
@@ -142,13 +154,13 @@ const MediumClap = props => {
     }));
   };
 
-  const memoized = useMemo(() => ({
+  const memoizedValue = useMemo(() => ({
     ...clapState,
     setRef
-  }, [clapState, setRef]));
+  }), [clapState, setRef]);
 
   return (
-    <Provider value={memoized}>
+    <Provider value={memoizedValue}>
       <button
         ref={setRef}
         data-refkey="clapRef"
@@ -195,12 +207,27 @@ const CountTotal = () => {
   );
 };
 
+MediumClap.Icon = ClapIcon;
+MediumClap.Count = ClapCount;
+MediumClap.Total = CountTotal;
+
 const Usage = () => {
-  return <MediumClap>
-    <ClapIcon />
-    <ClapCount />
-    <CountTotal />
-  </MediumClap>;
+  const [count, setCount] = useState(0);
+  const handleClap = clapState => setCount(clapState.count);
+
+  return (<>
+    <div style={{width: "100%"}}>
+      <MediumClap onClap={handleClap}>
+        <MediumClap.Icon />
+        <MediumClap.Count />
+        <MediumClap.Total />
+      </MediumClap>
+
+      {!!count && (<div className={styles.info}>
+        {`You have clapped ${count} times`}
+      </div>)}
+    </div>
+  </>);
 };
 
 export default Usage;
