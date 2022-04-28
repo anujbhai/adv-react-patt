@@ -118,6 +118,7 @@ const MediumClap = props => {
   const {
     children,
     onClap,
+    values = null,
     style: userStyles = {},
     className
   } = props;
@@ -143,27 +144,35 @@ const MediumClap = props => {
   const componentJustMounted = useRef(true);
 
   useEffect(() => {
-    if (!componentJustMounted.current) {
-      console.log("invoked ...")
+    if (!componentJustMounted.current && !isControlled) {
       onClap && onClap(clapState);
     }
 
     componentJustMounted.current = false;
-  }, [count]);
+  }, [count, onClap, isControlled]);
+
+  const isControlled = !!values && onClap;
 
   const handleClapClick = () => {
     animationTimeline.replay();
-    setClapState(prevState => ({
-      isClicked: true,
-      count: Math.min(count + 1, MAX_USER_CLAP),
-      countTotal: count < MAX_USER_CLAP ? prevState.countTotal + 1 : prevState.countTotal
-    }));
+
+    isControlled
+      ?
+      onClap()
+      : 
+      setClapState(prevState => ({
+        isClicked: true,
+        count: Math.min(count + 1, MAX_USER_CLAP),
+        countTotal: count < MAX_USER_CLAP ? prevState.countTotal + 1 : prevState.countTotal
+      }));
   };
 
+  const getState = () => isControlled ? values : clapState;
+
   const memoizedValue = useMemo(() => ({
-    ...clapState,
+    ...getState(),
     setRef
-  }), [clapState, setRef]);
+  }), [values, clapState, setRef]);
 
   const classNames = [styles.clap, className].join(" ").trim();
 
@@ -186,7 +195,7 @@ const MediumClap = props => {
  * Sub components
  */
 const ClapIcon = props => {
-  const {style: userStyles = {}, className} = props;
+  const { style: userStyles = {}, className } = props;
 
   const { isClicked } = useContext(MediumClapContext);
 
@@ -233,20 +242,40 @@ MediumClap.Icon = ClapIcon;
 MediumClap.Count = ClapCount;
 MediumClap.Total = CountTotal;
 
+const INITIAL_STATE = {
+  count: 0,
+  countTotal: 2100,
+  isClicked: false
+};
+const MAX_CLAP_VAL = 10;
+
 const Usage = () => {
-  const [count, setCount] = useState(0);
-  const handleClap = clapState => setCount(clapState.count);
+  // const [count, setCount] = useState(0);
+  const [state, setState] = useState(INITIAL_STATE);
+  const handleClap = () => {
+    setState(({ count, countTotal }) => ({
+      count: Math.min(count + 1, MAX_CLAP_VAL),
+      countTotal: count < MAX_CLAP_VAL ? countTotal + 1 : countTotal,
+      isClicked: true,
+    }));
+  };
 
   return (<>
     <div style={{ width: "100%" }}>
-      <MediumClap onClap={handleClap} className={customStyles.clap}>
+      <MediumClap values={state} onClap={handleClap} className={customStyles.clap}>
         <MediumClap.Icon className={customStyles.icon} />
         <MediumClap.Count className={customStyles.count} />
         <MediumClap.Total className={customStyles.total} />
       </MediumClap>
 
-      {!!count && (<div className={styles.info}>
-        {`You have clapped ${count} times`}
+      <MediumClap values={state} onClap={handleClap} className={customStyles.clap}>
+        <MediumClap.Icon className={customStyles.icon} />
+        <MediumClap.Count className={customStyles.count} />
+        <MediumClap.Total className={customStyles.total} />
+      </MediumClap>
+
+      {!!state.count && (<div className={styles.info}>
+        {`You have clapped ${state.count} times`}
       </div>)}
     </div>
   </>);
