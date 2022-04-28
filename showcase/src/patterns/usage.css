@@ -4,6 +4,14 @@
     color: #896EAF;
 }
 
+/* icon */
+.icon {
+    stroke: #896EAF; 
+}
+.icon.checked {
+    fill: #896EAF; 
+}
+
  /* count */ 
 .count {
     background: #896EAF; 
