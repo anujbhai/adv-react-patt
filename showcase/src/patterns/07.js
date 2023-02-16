@@ -134,6 +134,10 @@ const useDOMRef = () => {
   return [DOMRef, setRef];
 };
 
+const callFnInSequence = (...fns) => (...args) => {
+  fns.forEach(fn => fn && fn(...args));
+};
+
 /*
  * Custorm clap state hook
  */
@@ -154,21 +158,23 @@ const useClapState = (initialState = INITIAL_STATE) => {
     }));
   }, [count, countTotal]);
 
-  // props collection for "click"
-  const togglerProps = {
-    handleClick: updateClapState,
+  // props getter for "click"
+  const getTogglerProps = ({handleClick, ...otherProps} = {}) => ({
+    handleClick: callFnInSequence(updateClapState, handleClick),
     "aria-pressed": clapState.isClicked,
-  };
+    ...otherProps,
+  });
 
-  // props collection for "count"
-  const counterProps = {
+  // props getter for "count"
+  const getCounterProps = ({...otherProps}) => ({
     count,
     "aria-valuemax": MAX_USER_CLAP,
     "aria-valuemin": 0,
     "aria-valuenow": count,
-  };
+    ...otherProps,
+  });
 
-  return {clapState, updateClapState, togglerProps, counterProps};
+  return {clapState, updateClapState, getTogglerProps, getCounterProps};
 };
 
 /*
@@ -242,7 +248,12 @@ const CountTotal = props => {
  * Usage
  */
 const Usage = () => {
-  const {clapState, updateClapState, togglerProps, counterProps} = useClapState();
+  const {
+    clapState,
+    updateClapState,
+    getTogglerProps,
+    getCounterProps
+  } = useClapState();
 
   const {count, countTotal, isClicked} = clapState;
 
@@ -254,6 +265,10 @@ const Usage = () => {
     clapTotalEl: clapTotalRef,
   });
 
+  const handleClick = () => {
+    console.log("CLICKED!!!!");
+  };
+
   useEffectAfterMount(() => {
     animationTimeline.replay()
   }, [count]);
@@ -261,12 +276,19 @@ const Usage = () => {
   return (
     <ClapContainer
       setRef={setRef}
-      {...togglerProps}
+      {
+        ...getTogglerProps({
+          handleClick: handleClick,
+          "aria-pressed": false,
+        })
+      }
       data-refkey="clapRef"
     >
       <ClapIcon isClicked={isClicked} />
       <ClapCount
-        {...counterProps}
+        {
+          ...getCounterProps({})
+        }
         setRef={setRef}
         data-refkey="clapCountRef"
       />
